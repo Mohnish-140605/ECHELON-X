@@ -436,7 +436,7 @@ export default function Page() {
             </div>
             <div className="w-2/4 text-center">
               <h1 className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-4xl font-bold text-transparent">
-                Guardian Angel
+                ECHELON X
               </h1>
             </div>
             <div className="w-1/4"></div>
