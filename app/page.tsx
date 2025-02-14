@@ -31,33 +31,26 @@ export default function Page() {
             <Car className="mr-2" size={24} />
             Driving Mode
           </Link>
-          <Link
-            href="/dashboards"
-            className="flex transform items-center rounded-full bg-purple-600 px-8 py-4 text-lg font-bold text-white transition duration-300 ease-in-out hover:scale-105 hover:bg-purple-700"
-          >
-            <BarChart className="mr-2" size={24} />
-            Dashboards
-          </Link>
-        </div>
 
-        <div className="mx-auto max-w-3xl rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
-          <h2 className="mb-4 flex items-center text-2xl font-bold">
-            <AlertCircle className="mr-2" size={24} />
-            How It Works
-          </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
-            Our advanced computer vision technology keeps you safe and focused:
-          </p>
-          <ul className="list-inside list-disc space-y-2 text-gray-700 dark:text-gray-300">
-            <li>Detects signs of drowsiness while driving</li>
-            <li>
-              Alerts you if you're looking at your phone instead of the road
-            </li>
-            <li>Monitors your focus during work hours</li>
-            <li>Provides real-time notifications to keep you on track</li>
-          </ul>
+          <div className="mx-auto max-w-3xl rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
+            <h2 className="mb-4 flex items-center text-2xl font-bold">
+              <AlertCircle className="mr-2" size={24} />
+              How It Works
+            </h2>
+            <p className="mb-4 text-gray-700 dark:text-gray-300">
+              Our advanced computer vision technology keeps you safe and
+              focused:
+            </p>
+            <ul className="list-inside list-disc space-y-2 text-gray-700 dark:text-gray-300">
+              <li>Detects signs of drowsiness while driving</li>
+              <li>
+                Alerts you if you're looking at your phone instead of the road
+              </li>
+              <li>Monitors your focus during work hours</li>
+              <li>Provides real-time notifications to keep you on track</li>
+            </ul>
+          </div>
         </div>
-
         <footer className="text-center text-gray-600 dark:text-gray-400">
           <p>&copy; 2025 Stay Alert App. All rights reserved.</p>
         </footer>
