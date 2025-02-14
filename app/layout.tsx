@@ -6,14 +6,15 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Guardian Angel',
-    template: '%s | Guardian Angel',
+    default: 'Echelon X',
+    template: '%s | Echelon X',
   },
   metadataBase: new URL('https://app-router.vercel.app'),
   description:
     'AI-powered driving safety assistant that helps keep you alert and focused on the road.',
   openGraph: {
-    title: 'Guardian Angel - Your AI Driving Assistant',
+    title:
+      'Echelon X - Your AI Driving Assistant(under work for PES Confluence',
     description:
       'AI-powered driving safety assistant that helps keep you alert and focused on the road.',
     images: [`/api/og?title=Guardian Angel`],

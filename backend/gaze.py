@@ -8,6 +8,9 @@ from imutils import face_utils
 import imutils
 import dlib
 
+detect = dlib.get_frontal_face_detector()
+predict = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+flag = 0
 
 def eye_aspect_ratio(eye):
 	A = distance.euclidean(eye[1], eye[5])
@@ -19,8 +22,6 @@ def eye_aspect_ratio(eye):
 def sleep_detection(frame:ndarray) -> str:
     thresh = 0.25
     frame_check = 20
-    detect = dlib.get_frontal_face_detector()
-    predict = dlib.shape_predictor("models/shape_predictor_68_face_landmarks.dat")# Dat file is the crux of the code
 
     (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_68_IDXS["left_eye"]
     (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_68_IDXS["right_eye"]
@@ -39,9 +40,10 @@ def sleep_detection(frame:ndarray) -> str:
             flag += 1
             print (flag)
             if flag >= frame_check:
+                flag = 0
                 return "sleepy"
         else:
-            flag = 0
+            return "awake"
 
 
 def relative(landmark: NormalizedLandmark, shape: tuple[int, int, int]) -> tuple[int, int]:
@@ -148,8 +150,9 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
             return "down"
 
         elif 10 > points_diff[0] > -40:
-
-
+            if sleep_detection(frame) == "sleepy":
+                return "sleepy"
+            
             return "forward"
 
         elif points_diff[0] != abs_points_diff[0]:
