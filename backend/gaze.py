@@ -1,54 +1,86 @@
 from typing import Literal
 import cv2
 import numpy as np
+import mediapipe as mp
 from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark, NormalizedLandmarkList
 from numpy import ndarray
 from scipy.spatial import distance
-from imutils import face_utils
 import imutils
-import dlib
 
+# Initialize MediaPipe FaceMesh
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    static_image_mode=False,
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
+
+flag = 0
 
 def eye_aspect_ratio(eye):
-	A = distance.euclidean(eye[1], eye[5])
-	B = distance.euclidean(eye[2], eye[4])
-	C = distance.euclidean(eye[0], eye[3])
-	ear = (A + B) / (2.0 * C)
-	return ear
+    A = distance.euclidean(eye[1], eye[5])
+    B = distance.euclidean(eye[2], eye[4])
+    C = distance.euclidean(eye[0], eye[3])
+    ear = (A + B) / (2.0 * C)
+    return ear
 
-def sleep_detection(frame:ndarray) -> str:
+def sleep_detection(frame: ndarray) -> str:
+    global flag
     thresh = 0.25
     frame_check = 20
-    detect = dlib.get_frontal_face_detector()
-    predict = dlib.shape_predictor("models/shape_predictor_68_face_landmarks.dat")# Dat file is the crux of the code
-
-    (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_68_IDXS["left_eye"]
-    (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_68_IDXS["right_eye"]
+    
     frame = imutils.resize(frame, width=450)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    subjects = detect(gray, 0)
-    for subject in subjects:
-        shape = predict(gray, subject)
-        shape = face_utils.shape_to_np(shape)#converting to NumPy Array
-        leftEye = shape[lStart:lEnd]
-        rightEye = shape[rStart:rEnd]
-        leftEAR = eye_aspect_ratio(leftEye)
-        rightEAR = eye_aspect_ratio(rightEye)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(frame_rgb)
+
+    if not results.multi_face_landmarks:
+        return "awake"
+
+    for face_landmarks in results.multi_face_landmarks:
+        # MediaPipe eye landmarks indices (left and right eyes)
+        left_eye_indices = [33, 160, 158, 133, 153, 144]
+        right_eye_indices = [362, 385, 387, 263, 373, 380]
+
+        left_eye = []
+        right_eye = []
+        
+        # Extract left eye coordinates
+        for idx in left_eye_indices:
+            landmark = face_landmarks.landmark[idx]
+            x = int(landmark.x * frame.shape[1])
+            y = int(landmark.y * frame.shape[0])
+            left_eye.append((x, y))
+            
+        # Extract right eye coordinates
+        for idx in right_eye_indices:
+            landmark = face_landmarks.landmark[idx]
+            x = int(landmark.x * frame.shape[1])
+            y = int(landmark.y * frame.shape[0])
+            right_eye.append((x, y))
+
+        leftEAR = eye_aspect_ratio(left_eye)
+        rightEAR = eye_aspect_ratio(right_eye)
         ear = (leftEAR + rightEAR) / 2.0
+
         if ear < thresh:
             flag += 1
-            print (flag)
+            print(flag)
             if flag >= frame_check:
+                flag = 0
                 return "sleepy"
         else:
             flag = 0
+            return "awake"
 
+    return "awake"
 
 def relative(landmark: NormalizedLandmark, shape: tuple[int, int, int]) -> tuple[int, int]:
     return (int(landmark.x * shape[1]), int(landmark.y * shape[0]))
 
 def relativeT(landmark: NormalizedLandmark, shape: tuple[int, int, int]) -> tuple[int, int, Literal[0]]:
-     return (int(landmark.x * shape[1]), int(landmark.y * shape[0]), 0)
+    return (int(landmark.x * shape[1]), int(landmark.y * shape[0]), 0)
 
 def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
     """
@@ -56,49 +88,35 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
     Returns the gaze direction as a string: 'forward', 'left', or 'right'
     """
 
-    '''
-    2D image points.
-    relative takes mediapipe points that is normalized to [-1, 1] and returns image points
-    at (x,y) format
-    '''
     image_points = np.array([
-        relative(points.landmark[4], frame.shape),  # Nose tip
-        relative(points.landmark[152], frame.shape),  # Chin
-        relative(points.landmark[263], frame.shape),  # Left eye left corner
-        relative(points.landmark[33], frame.shape),  # Right eye right corner
-        relative(points.landmark[287], frame.shape),  # Left Mouth corner
-        relative(points.landmark[57], frame.shape)  # Right mouth corner
+        relative(points.landmark[4], frame.shape),
+        relative(points.landmark[152], frame.shape),
+        relative(points.landmark[263], frame.shape),
+        relative(points.landmark[33], frame.shape),
+        relative(points.landmark[287], frame.shape),
+        relative(points.landmark[57], frame.shape)
     ], dtype="double")
 
-    '''
-    2D image points.
-    relativeT takes mediapipe points that is normalized to [-1, 1] and returns image points
-    at (x,y,0) format
-    '''
     image_points1 = np.array([
-        relativeT(points.landmark[4], frame.shape),  # Nose tip
-        relativeT(points.landmark[152], frame.shape),  # Chin
-        relativeT(points.landmark[263], frame.shape),  # Left eye, left corner
-        relativeT(points.landmark[33], frame.shape),  # Right eye, right corner
-        relativeT(points.landmark[287], frame.shape),  # Left Mouth corner
-        relativeT(points.landmark[57], frame.shape)  # Right mouth corner
+        relativeT(points.landmark[4], frame.shape),
+        relativeT(points.landmark[152], frame.shape),
+        relativeT(points.landmark[263], frame.shape),
+        relativeT(points.landmark[33], frame.shape),
+        relativeT(points.landmark[287], frame.shape),
+        relativeT(points.landmark[57], frame.shape)
     ], dtype="double")
 
-    # 3D model points.
     model_points = np.array([
-        (0.0, 0.0, 0.0),  # Nose tip
-        (0, -63.6, -12.5),  # Chin
-        (-43.3, 32.7, -26),  # Left eye, left corner
-        (43.3, 32.7, -26),  # Right eye, right corner
-        (-28.9, -28.9, -24.1),  # Left Mouth corner
-        (28.9, -28.9, -24.1)  # Right mouth corner
+        (0.0, 0.0, 0.0),
+        (0, -63.6, -12.5),
+        (-43.3, 32.7, -26),
+        (43.3, 32.7, -26),
+        (-28.9, -28.9, -24.1),
+        (28.9, -28.9, -24.1)
     ])
 
-    # 3D model eye points
-    # The center of the eye ball
-    Eye_ball_center_left = np.array([[29.05], [32.7], [-39.5]])  # the center of the left eyeball as a vector.
+    Eye_ball_center_left = np.array([[29.05], [32.7], [-39.5]])
 
-    # camera matrix estimation
     focal_length = frame.shape[1]
     center = (frame.shape[1] / 2, frame.shape[0] / 2)
     camera_matrix = np.array(
@@ -107,34 +125,26 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
          [0, 0, 1]], dtype="double"
     )
 
-    dist_coeffs = np.zeros((4, 1))  # Assuming no lens distortion
-    (success, rotation_vector, translation_vector) = cv2.solvePnP(model_points, image_points, camera_matrix,
-                                                                  dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
+    dist_coeffs = np.zeros((4, 1))
+    (success, rotation_vector, translation_vector) = cv2.solvePnP(
+        model_points, image_points, camera_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
 
-    # 2d pupil location
     left_pupil = relative(points.landmark[468], frame.shape)
 
-    # Transformation between image point to world point
-    _, transformation, _ = cv2.estimateAffine3D(image_points1, model_points)  # image to world transformation
+    _, transformation, _ = cv2.estimateAffine3D(image_points1, model_points)
 
-    if transformation is not None:  # if estimateAffine3D succeeded
-        # project pupil image point into 3d world point
+    if transformation is not None:
         pupil_world_cord = transformation @ np.array([[left_pupil[0], left_pupil[1], 0, 1]]).T
 
-        # 3D gaze point (10 is arbitrary value denoting gaze distance)
         S = Eye_ball_center_left + (pupil_world_cord - Eye_ball_center_left) * 10
 
-        # Project a 3D gaze direction onto the image plane.
         (eye_pupil2D, _) = cv2.projectPoints((int(S[0]), int(S[1]), int(S[2])), rotation_vector,
                                              translation_vector, camera_matrix, dist_coeffs)
-        # project 3D head pose into the image plane
         (head_pose, _) = cv2.projectPoints((int(pupil_world_cord[0]), int(pupil_world_cord[1]), int(40)),
                                            rotation_vector,
                                            translation_vector, camera_matrix, dist_coeffs)
-        # correct gaze for head rotation
         gaze = left_pupil + (eye_pupil2D[0][0] - left_pupil) - (head_pose[0][0] - left_pupil)
 
-        # Draw gaze line into screen
         point1 = (int(left_pupil[0]), int(left_pupil[1]))
         point2 = (int(gaze[0]), int(gaze[1]))
 
@@ -148,8 +158,9 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
             return "down"
 
         elif 10 > points_diff[0] > -40:
-
-
+            if sleep_detection(frame) == "sleepy":
+                return "sleepy"
+            
             return "forward"
 
         elif points_diff[0] != abs_points_diff[0]:
@@ -158,4 +169,4 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
         else:
             return "right"
     
-    return "unknown"  # Return unknown if transformation failed
+    return "unknown"
