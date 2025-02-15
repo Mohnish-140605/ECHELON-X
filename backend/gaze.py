@@ -28,7 +28,7 @@ def eye_aspect_ratio(eye):
 
 def sleep_detection(frame: ndarray) -> str:
     global flag
-    thresh = 0.25
+    thresh = 0.10
     frame_check = 20
     
     frame = imutils.resize(frame, width=450)
@@ -66,15 +66,14 @@ def sleep_detection(frame: ndarray) -> str:
 
         if ear < thresh:
             flag += 1
-            print(flag)
+
             if flag >= frame_check:
+                if ear< thresh:
+                    return "sleepy"
                 flag = 0
-                return "sleepy"
         else:
             flag = 0
-            return "awake"
-
-    return "awake"
+            return "forward"
 
 def relative(landmark: NormalizedLandmark, shape: tuple[int, int, int]) -> tuple[int, int]:
     return (int(landmark.x * shape[1]), int(landmark.y * shape[0]))
@@ -155,18 +154,22 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
         abs_points_diff = abs(points_diff)
 
         if -10 > points_diff[1]:
+            print("looking down")
             return "down"
 
         elif 10 > points_diff[0] > -40:
             if sleep_detection(frame) == "sleepy":
+                print("sleepy")
                 return "sleepy"
-            
+            print("looking forward")
             return "forward"
 
         elif points_diff[0] != abs_points_diff[0]:
+            print("looking left")
             return "left"
 
         else:
+            print("looking right")
             return "right"
     
     return "unknown"
