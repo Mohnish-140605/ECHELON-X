@@ -124,7 +124,7 @@ export default function Page() {
         const currentTime = Date.now();
         if (!eyesClosedStartTime.current) {
           eyesClosedStartTime.current = currentTime;
-        } else if (currentTime - eyesClosedStartTime.current >= 3000) {
+        } else if (currentTime - eyesClosedStartTime.current >= 1000) {
           setEyesClosedCount((prev) => prev + 1);
           setAlertLevel('Warning');
           playAlertSound();
