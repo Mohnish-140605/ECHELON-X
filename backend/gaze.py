@@ -28,7 +28,7 @@ def eye_aspect_ratio(eye):
 
 def sleep_detection(frame: ndarray) -> str:
     global flag
-    thresh = 0.25
+    thresh = 0.10
     frame_check = 20
     
     frame = imutils.resize(frame, width=450)
@@ -63,13 +63,14 @@ def sleep_detection(frame: ndarray) -> str:
         leftEAR = eye_aspect_ratio(left_eye)
         rightEAR = eye_aspect_ratio(right_eye)
         ear = (leftEAR + rightEAR) / 2.0
-
+        print(ear)
         if ear < thresh:
             flag += 1
             print(flag)
             if flag >= frame_check:
+                if ear< thresh:
+                    return "sleepy"
                 flag = 0
-                return "sleepy"
         else:
             flag = 0
             return "awake"
