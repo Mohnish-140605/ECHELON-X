@@ -119,18 +119,18 @@ export default function Page() {
         setAlertLevel('Normal');
         break;
 
-      case 'closed':
+      case 'sleepy':
         setCurrentDirection('Eyes Closed');
         const currentTime = Date.now();
         if (!eyesClosedStartTime.current) {
           eyesClosedStartTime.current = currentTime;
-        } else if (currentTime - eyesClosedStartTime.current >= 3000) {
+        } else if (currentTime - eyesClosedStartTime.current >= 1000) {
           setEyesClosedCount((prev) => prev + 1);
           setAlertLevel('Warning');
           playAlertSound();
           toast.error('⚠️ Wake Up! You appear to be falling asleep! 😴', {
             style: {
-              background: '#eab308', // Red background for serious warning
+              background: '#eab308', // Yellow background for serious warning
             },
           });
           eyesClosedStartTime.current = null;
@@ -148,7 +148,7 @@ export default function Page() {
           playAlertSound();
           toast('⚠️ Eyes on the Road! Stop checking your phone! 📱', {
             style: {
-              background: '#ef4444', // Yellow background for caution
+              background: '#ef4444', // Red background for serious warning
               color: '#fff',
               fontWeight: 'bold',
               fontSize: '1.1rem',
@@ -158,6 +158,13 @@ export default function Page() {
           });
           lookingDownStartTime.current = null;
         }
+        break;
+
+      default:
+        setCurrentDirection('Not Detected');
+        eyesClosedStartTime.current = null;
+        lookingDownStartTime.current = null;
+        setAlertLevel('Normal');
         break;
     }
   };
